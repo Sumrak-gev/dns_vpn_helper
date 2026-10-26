@@ -1,0 +1,51 @@
+[
+  {
+    "id": "comss",
+    "name": "Comss.one DNS",
+    "description": "Обход блокировок, доступ к заблокированным сервисам",
+    "primary": "94.250.253.55",
+    "secondary": "195.133.25.16",
+    "can_auto_update": true,
+    "update_url": "https://comss.one/dns"
+  },
+  {
+    "id": "adguard",
+    "name": "AdGuard DNS",
+    "description": "Блокировка рекламы, трекеров и фишинга",
+    "primary": "94.140.14.14",
+    "secondary": "94.140.15.15",
+    "can_auto_update": false
+  },
+  {
+    "id": "cloudflare",
+    "name": "Cloudflare DNS (1.1.1.1)",
+    "description": "Быстрый, приватный общедоступный DNS",
+    "primary": "1.1.1.1",
+    "secondary": "1.0.0.1",
+    "can_auto_update": false
+  },
+  {
+    "id": "google",
+    "name": "Google Public DNS",
+    "description": "Стабильный глобальный DNS от Google",
+    "primary": "8.8.8.8",
+    "secondary": "8.8.4.4",
+    "can_auto_update": false
+  },
+  {
+    "id": "quad9",
+    "name": "Quad9 DNS",
+    "description": "Защита от вредоносных сайтов и фишинга",
+    "primary": "9.9.9.9",
+    "secondary": "149.112.112.112",
+    "can_auto_update": false
+  },
+  {
+    "id": "yandex",
+    "name": "Яндекс DNS (Базовый)",
+    "description": "Быстрый DNS с серверами в РФ",
+    "primary": "77.88.8.8",
+    "secondary": "77.88.8.1",
+    "can_auto_update": false
+  }
+]

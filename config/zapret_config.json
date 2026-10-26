@@ -1,0 +1,27 @@
+{
+  "zapret_dir": "tools/zapret",
+  "selected_preset": "general",
+  "custom_args": "",
+  "presets": {
+    "general": {
+      "name": "General (YouTube + Discord + Сайты)",
+      "description": "Универсальный режим обхода DPI для веб-сайтов, YouTube и Discord",
+      "args": "--wf-l3=ipv4,ipv6 --wf-tcp=80,443 --wf-udp=443,50000-65535 --filter-udp=443 --dpi-desync=fake --dpi-desync-repeats=6 --newfilter --filter-udp=50000-65535 --dpi-desync=fake --newfilter --filter-tcp=80,443 --dpi-desync=fake,split2 --dpi-desync-autottl=2 --dpi-desync-repeats=6 --dpi-desync-fooling=badseq"
+    },
+    "youtube_split": {
+      "name": "YouTube (TLS Split)",
+      "description": "Легковесный обход замедления YouTube (разбиение TLS ClientHello)",
+      "args": "--wf-l3=ipv4,ipv6 --wf-tcp=80,443 --filter-tcp=80,443 --dpi-desync=split2 --dpi-desync-split-pos=1"
+    },
+    "discord_voice": {
+      "name": "Discord Fix (Голосовые каналы UDP + TLS)",
+      "description": "Специальный профиль для разблокировки звонков и голосовых каналов Discord",
+      "args": "--wf-l3=ipv4,ipv6 --wf-udp=50000-65535 --dpi-desync=fake --dpi-desync-any-protocol --newfilter --wf-tcp=443 --dpi-desync=fake,split2 --dpi-desync-autottl=2"
+    },
+    "custom": {
+      "name": "Пользовательские параметры",
+      "description": "Своя строка запуска winws.exe",
+      "args": ""
+    }
+  }
+}

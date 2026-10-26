@@ -5,13 +5,13 @@ import os
 import subprocess
 from typing import Dict, Optional, Tuple
 
+from src.core.path_helper import get_base_dir, get_config_file
+
 logger = logging.getLogger(__name__)
 
-CONFIG_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "config",
-    "zapret_config.json",
-)
+
+def get_zapret_config_path() -> str:
+    return get_config_file("zapret_config.json")
 
 
 class ZapretManager:
@@ -22,9 +22,10 @@ class ZapretManager:
     @classmethod
     def load_config(cls) -> dict:
         """Loads zapret settings from config file."""
-        if os.path.isfile(CONFIG_PATH):
+        cfg_path = get_zapret_config_path()
+        if os.path.isfile(cfg_path):
             try:
-                with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                with open(cfg_path, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Error loading zapret config: {e}")
@@ -38,9 +39,10 @@ class ZapretManager:
     @classmethod
     def save_config(cls, data: dict) -> bool:
         """Saves zapret settings to config file."""
+        cfg_path = get_zapret_config_path()
         try:
-            os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
-            with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+            os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
+            with open(cfg_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             return True
         except Exception as e:
@@ -57,8 +59,7 @@ class ZapretManager:
 
         # Convert to absolute path if relative
         if not os.path.isabs(base_dir):
-            root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-            base_dir = os.path.join(root_dir, base_dir)
+            base_dir = os.path.join(get_base_dir(), base_dir)
 
         if not os.path.isdir(base_dir):
             return None

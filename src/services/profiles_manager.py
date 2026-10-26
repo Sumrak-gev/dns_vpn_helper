@@ -5,13 +5,13 @@ import logging
 import os
 from typing import Dict, List, Optional
 
+from src.core.path_helper import get_config_file
+
 logger = logging.getLogger(__name__)
 
-DEFAULT_CONFIG_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-    "config",
-    "profiles.json",
-)
+
+def get_default_config_path() -> str:
+    return get_config_file("profiles.json")
 
 
 def is_valid_ipv4(ip_str: str) -> bool:
@@ -27,7 +27,7 @@ class ProfilesManager:
     """Handles storage and retrieval of DNS profiles."""
 
     def __init__(self, config_path: Optional[str] = None):
-        self.config_path = config_path or DEFAULT_CONFIG_PATH
+        self.config_path = config_path or get_default_config_path()
         self.profiles: List[Dict] = []
         self.load()
 

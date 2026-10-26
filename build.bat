@@ -8,6 +8,7 @@ py -m pip install --upgrade pyinstaller customtkinter requests
 py -m PyInstaller --noconsole --onefile --uac-admin ^
   --name "DNS_VPN_Helper" ^
   --add-data "config;config" ^
+  --add-data "tools;tools" ^
   --collect-all customtkinter ^
   src/main.py
 

@@ -17,7 +17,64 @@ def get_zapret_config_path() -> str:
 class ZapretManager:
     """Controls the winws.exe DPI bypass daemon."""
 
-    _process: Optional[subprocess.Popen] = None
+    _log_buffer: List[str] = []
+
+    @classmethod
+    def get_logs(cls) -> str:
+        """Returns recent logs from winws or management operations."""
+        return "\n".join(cls._log_buffer[-100:])
+
+    @classmethod
+    def append_log(cls, msg: str):
+        """Appends a message to the internal log."""
+        import datetime
+        now = datetime.datetime.now().strftime("%H:%M:%S")
+        cls._log_buffer.append(f"[{now}] {msg}")
+        if len(cls._log_buffer) > 200:
+            cls._log_buffer.pop(0)
+
+    @classmethod
+    def scan_zapret_files(cls, directory: Optional[str] = None) -> dict:
+        """
+        Scans directory for zapret components:
+        winws.exe, WinDivert.dll, WinDivert64.sys, .txt hostlists, .bin fake payloads.
+        """
+        config = cls.load_config()
+        base_dir = directory or config.get("zapret_dir", "tools/zapret")
+        if not os.path.isabs(base_dir):
+            base_dir = os.path.join(get_base_dir(), base_dir)
+
+        result = {
+            "dir": base_dir,
+            "exists": os.path.isdir(base_dir),
+            "has_winws": False,
+            "has_windivert_dll": False,
+            "has_windivert_sys": False,
+            "hostlists": [],
+            "fake_bins": [],
+            "all_files": [],
+        }
+
+        if not result["exists"]:
+            return result
+
+        for root, _, files in os.walk(base_dir):
+            for f in files:
+                f_lower = f.lower()
+                rel = os.path.relpath(os.path.join(root, f), base_dir)
+                result["all_files"].append(rel)
+                if f_lower == "winws.exe":
+                    result["has_winws"] = True
+                elif f_lower == "windivert.dll":
+                    result["has_windivert_dll"] = True
+                elif f_lower == "windivert64.sys":
+                    result["has_windivert_sys"] = True
+                elif f_lower.endswith(".txt"):
+                    result["hostlists"].append(rel)
+                elif f_lower.endswith(".bin"):
+                    result["fake_bins"].append(rel)
+
+        return result
 
     @classmethod
     def load_config(cls) -> dict:
@@ -127,6 +184,7 @@ class ZapretManager:
             # WinDivert driver must be located next to winws.exe
             working_dir = os.path.dirname(winws_path)
 
+            cls.append_log(f"Запуск winws.exe: {' '.join(cmd)}")
             cls._process = subprocess.Popen(
                 cmd,
                 cwd=working_dir,
@@ -134,21 +192,23 @@ class ZapretManager:
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
             )
 
-            # Update selected preset in config
             config["selected_preset"] = preset_key
             if custom_args:
                 config["custom_args"] = custom_args
             cls.save_config(config)
 
+            cls.append_log(f"Zapret успешно запущен (режим: {preset_key})")
             return True, f"Zapret запущен (режим: {presets.get(preset_key, {}).get('name', preset_key)})"
         except Exception as e:
             logger.error(f"Failed to start winws: {e}")
+            cls.append_log(f"Ошибка запуска: {e}")
             return False, f"Ошибка запуска winws.exe: {e}"
 
     @classmethod
     def stop(cls) -> Tuple[bool, str]:
         """Terminates winws.exe process and frees WinDivert filter."""
         try:
+            cls.append_log("Остановка winws.exe и службы WinDivert...")
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
             startupinfo.wShowWindow = subprocess.SW_HIDE

@@ -1,10 +1,31 @@
 """DNS Manager for Windows network interfaces."""
 import json
 import logging
+import socket
 import subprocess
+import time
 from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
+
+
+def ping_dns_server(ip: str, port: int = 53, timeout: float = 1.0) -> Optional[int]:
+    """Measures DNS server round-trip latency in milliseconds via UDP query."""
+    if not ip or not ip.strip():
+        return None
+    # Minimal DNS request for 'com'
+    query = b"\xaa\xbb\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x03www\x06google\x03com\x00\x00\x01\x00\x01"
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.settimeout(timeout)
+    t0 = time.time()
+    try:
+        sock.sendto(query, (ip.strip(), port))
+        sock.recvfrom(512)
+        return int((time.time() - t0) * 1000)
+    except Exception:
+        return None
+    finally:
+        sock.close()
 
 
 class DNSManager:

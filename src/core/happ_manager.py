@@ -27,8 +27,65 @@ class HappManager:
         return None
 
     @staticmethod
-    def is_running() -> bool:
-        """Check if Happ.exe process is currently running."""
+    def is_service_running() -> bool:
+        """Checks if HappService Windows Service is running."""
+        try:
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = subprocess.SW_HIDE
+
+            out = subprocess.check_output(
+                ["sc.exe", "query", "HappService"],
+                text=True,
+                errors="ignore",
+                startupinfo=startupinfo,
+            )
+            return "STATE" in out and "RUNNING" in out
+        except Exception:
+            return False
+
+    @staticmethod
+    def restart_service() -> tuple[bool, str]:
+        """Restarts HappService Windows Service."""
+        try:
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = subprocess.SW_HIDE
+
+            subprocess.run(["net.exe", "stop", "HappService"], capture_output=True, startupinfo=startupinfo)
+            res = subprocess.run(["net.exe", "start", "HappService"], capture_output=True, text=True, startupinfo=startupinfo)
+            if res.returncode == 0:
+                return True, "Служба HappService успешно перезапущена"
+            return False, res.stderr or "Не удалось запустить HappService"
+        except Exception as e:
+            return False, str(e)
+
+    @classmethod
+    def get_process_info(cls) -> Optional[dict]:
+        """Returns details about running Happ process (PID, memory)."""
+        try:
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = subprocess.SW_HIDE
+
+            out = subprocess.check_output(
+                ["tasklist.exe", "/FI", "IMAGENAME eq Happ.exe", "/FO", "CSV", "/NH"],
+                text=True,
+                errors="ignore",
+                startupinfo=startupinfo,
+            )
+            for line in out.strip().splitlines():
+                parts = [p.strip(' "') for p in line.split('","')]
+                if len(parts) >= 5 and "Happ.exe" in parts[0]:
+                    return {
+                        "name": parts[0],
+                        "pid": parts[1],
+                        "session": parts[2],
+                        "mem": parts[4],
+                    }
+        except Exception:
+            pass
+        return None
         try:
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW

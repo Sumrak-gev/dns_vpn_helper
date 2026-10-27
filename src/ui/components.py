@@ -23,6 +23,8 @@ THEME = {
     "danger_border": "#4C1D24",
     "danger_hover": "#E11D48",
     "success_dot": "#34D399",    # Active green indicator
+    "tab_active_bg": "#1E293B",  # Active tab background
+    "tab_inactive_bg": "#0D0E12",# Inactive tab background
 }
 
 
@@ -51,8 +53,8 @@ def lerp_color(color_a: str, color_b: str, t: float) -> str:
 
 class AnimatedButton(ctk.CTkButton):
     """
-    A minimalist CustomTkinter button with smooth 60fps color transition animations
-    on hover and click press/release bounce.
+    A minimalist CustomTkinter button with smooth color transition animations
+    while preserving 100% of CTkButton click and command functionality.
     """
 
     def __init__(
@@ -65,8 +67,8 @@ class AnimatedButton(ctk.CTkButton):
         hover_border: Optional[str] = None,
         border_width: int = 1,
         corner_radius: int = 8,
-        transition_steps: int = 6,
-        step_delay_ms: int = 14,
+        transition_steps: int = 5,
+        step_delay_ms: int = 15,
         **kwargs
     ):
         self.normal_bg = normal_bg
@@ -81,7 +83,6 @@ class AnimatedButton(ctk.CTkButton):
         self._current_step = 0
         self._target_step = 0
 
-        # We disable CTk's built-in instantaneous hover by matching colors or handling ourselves
         super().__init__(
             master,
             fg_color=self.normal_bg,
@@ -91,11 +92,6 @@ class AnimatedButton(ctk.CTkButton):
             corner_radius=corner_radius,
             **kwargs
         )
-
-        self.bind("<Enter>", self._on_enter, add="+")
-        self.bind("<Leave>", self._on_leave, add="+")
-        self.bind("<ButtonPress-1>", self._on_press, add="+")
-        self.bind("<ButtonRelease-1>", self._on_release, add="+")
 
     def set_colors(self, normal_bg: str, hover_bg: str, normal_border: Optional[str] = None, hover_border: Optional[str] = None):
         """Update colors dynamically (e.g. active states)."""
@@ -112,15 +108,12 @@ class AnimatedButton(ctk.CTkButton):
             self._anim_job = None
             return
 
-        # Advance step toward target
         if self._current_step < self._target_step:
             self._current_step += 1
         else:
             self._current_step -= 1
 
         t = self._current_step / float(self.transition_steps)
-
-        # Interpolate background and border colors
         cur_bg = lerp_color(self.normal_bg, self.hover_bg, t)
         cur_border = lerp_color(self.normal_border, self.hover_border, t)
 
@@ -130,22 +123,20 @@ class AnimatedButton(ctk.CTkButton):
         except Exception:
             self._anim_job = None
 
-    def _on_enter(self, _):
+    def _on_enter(self, event=None):
+        super()._on_enter(event)
         self._target_step = self.transition_steps
         if self._anim_job is None:
             self._animate()
 
-    def _on_leave(self, _):
+    def _on_leave(self, event=None):
+        super()._on_leave(event)
         self._target_step = 0
         if self._anim_job is None:
             self._animate()
 
-    def _on_press(self, _):
-        if self._anim_job:
-            self.after_cancel(self._anim_job)
-            self._anim_job = None
-        self.configure(fg_color=self.press_bg)
-
-    def _on_release(self, _):
+    def _on_release(self, event=None):
+        # CRITICAL: Always invoke parent _on_release so self._command() is executed!
+        super()._on_release(event)
         self._target_step = self.transition_steps
         self._animate()
